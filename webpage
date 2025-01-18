@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<!-- saved from url=(0080)file:///C:/Users/91863/Dropbox/PC/Desktop/5b4/fitness%20site/FitnessTracker.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fitness Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: url("C:\Users\91863\Pictures\Saved Pictures\pic1.jpeg") no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding-top: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            text-align: center;
+        }
+        h1 {
+            color: #007BFF;
+            margin-bottom: 20px;
+        }
+        input, button {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .report, .history, .chart-container {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+        .progress-bar div {
+            height: 20px;
+            background-color: #007BFF;
+            width: 0;
+            transition: width 0.5s;
+        }
+        .chart-bar {
+            background-color: #007BFF;
+            width: 0;
+            height: 20px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .chart-container {
+            width: 100%;
+            height: 200px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Comprehensive Fitness Tracker</h1>
+        <input type="number" id="goalInput" placeholder="Set your daily step goal">
+        <button onclick="setGoal()">Set Goal</button>
+        <input type="number" id="stepsInput" placeholder="Enter steps">
+        <button onclick="trackFitness()">Track Steps</button>
+        <button onclick="resetTracker()">Reset Tracker</button>
+        
+        <div class="progress-bar">
+            <div id="progress" style="width: 0%;"></div>
+        </div>
+        
+        <div class="report" id="report">
+            <h3>Fitness Report</h3>
+            <p>Steps: 0</p>
+            <p>Calories Burned: 0 kcal</p>
+            <p>Distance: 0 km</p>
+            <p>Goal Progress: 0%</p>
+        </div>
+        
+        <div class="history" id="history">
+            <h3>History</h3>
+            <p>No history available.</p>
+        </div>
+        
+        <div class="water-tracker">
+            <h3>Water Intake Tracker</h3>
+            <input type="number" id="waterInput" placeholder="Enter water intake (ml)">
+            <button onclick="trackWater()">Track Water</button>
+            <p id="waterReport">Total Water Intake: 0 ml</p>
+        </div>
+        
+        <div class="sleep-tracker">
+            <h3>Sleep Tracker</h3>
+            <input type="number" id="sleepInput" placeholder="Enter sleep hours">
+            <button onclick="trackSleep()">Track Sleep</button>
+            <p id="sleepReport">Total Sleep: 0 hours</p>
+        </div>
+        
+        <div class="bmi-calculator">
+            <h3>BMI Calculator</h3>
+            <input type="number" id="weightInput" placeholder="Enter your weight (kg)">
+            <input type="number" id="heightInput" placeholder="Enter your height (cm)">
+            <button onclick="calculateBMI()">Calculate BMI</button>
+            <p id="bmiReport">BMI: 0 (Normal)</p>
+        </div>
+        
+        <div class="heartbeat-tracker">
+            <h3>Heartbeat Tracker</h3>
+            <input type="number" id="heartbeatInput" placeholder="Enter your heartbeat (bpm)">
+            <button onclick="trackHeartbeat()">Track Heartbeat</button>
+            <p id="heartbeatReport">Average Heartbeat: 0 bpm</p>
+        </div>
+        
+        <div class="chart-container" id="chartContainer">
+            <!-- Chart bars will be added here dynamically -->
+        </div>
+    </div>
+    
+    <script>
+        let totalSteps = 0;
+        let totalCalories = 0;
+        let totalDistance = 0.0;
+        let dailyGoal = 10000; // Default goal
+        let history = [];
+        const maxHistoryDays = 7;
+        let totalWater = 0; // in ml
+        let totalSleep = 0; // in hours
+        let totalHeartbeat = 0; // in bpm
+        let heartbeatCount = 0;
+        
+        document.addEventListener("DOMContentLoaded", function() {
+            setGreeting();
+        });
+
+        function setGoal() {
+            const goal = parseInt(document.getElementById('goalInput').value);
+            if (isNaN(goal) || goal <= 0) {
+                alert('Please enter a valid step goal.');
+                return;
+            }
+            dailyGoal = goal;
+            alert(`Daily goal set to ${dailyGoal} steps.`);
+        }
+
+        function trackFitness() {
+            const steps = parseInt(document.getElementById('stepsInput').value);
+            if (isNaN(steps) || steps <= 0) {
+                alert('Please enter a valid number of steps.');
+                return;
+            }
+            totalSteps += steps;
+            const strideLength = 0.0008; // in kilometers
+            totalDistance += steps * strideLength;
+            totalCalories += steps * 0.04; // calories per step approximation
+            updateProgressBar();
+            updateReport();
+            checkMilestones();
+        }
+
+        function resetTracker() {
+            history.push({ steps: totalSteps, date: new Date().toLocaleDateString() });
+            if (history.length > maxHistoryDays) {
+                history.shift();
+            }
+            totalSteps = 0;
+            totalCalories = 0;
+            totalDistance = 0.0;
+            updateProgressBar();
+            updateReport();
+            updateHistory();
+            updateChart();
+        }
+
+        function updateProgressBar() {
+            const progress = (totalSteps / dailyGoal) * 100;
+            document.getElementById('progress').style.width = `${Math.min(progress, 100)}%`;
+        }
+
+        function updateReport() {
+            document.getElementById('report').innerHTML = `
+                <h3>Fitness Report</h3>
+                <p>Steps: ${totalSteps}</p>
+                <p>Calories Burned: ${totalCalories.toFixed(2)} kcal</p>
+                <p>Distance: ${totalDistance.toFixed(2)} km</p>
+                <p>Goal Progress: ${Math.min((totalSteps / dailyGoal) * 100, 100).toFixed(2)}%</p>
+            `;
+        }
+
+        function updateHistory() {
+            let historyHtml = '';
+            history.forEach(entry => {
+                historyHtml += `<p>${entry.date}: ${entry.steps} steps</p>`;
+            });
+            document.getElementById('history').innerHTML = historyHtml;
+        }
+
+        function updateChart() {
+            const chartContainer = document.getElementById('chartContainer');
+            chartContainer.innerHTML = '';
+            history.forEach(entry => {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+                bar.style.width = `${(entry.steps / dailyGoal) * 100}%`;
+                bar.innerText = `${entry.steps} steps`;
+                chartContainer.appendChild(bar);
+            });
+        }
+
+        function checkMilestones() {
+            const progress = (totalSteps / dailyGoal) * 100;
+            if (progress >= 100) {
+                alert('Congratulations! You have reached your goal!');
+            } else if (progress >= 75) {
+                alert('Great job! You have completed 75% of your goal.');
+            } else if (progress >= 50) {
+                alert('Keep going! You have completed 50% of your goal.');
+            } else if (progress >= 25) {
+                alert('Good start! You have completed 25% of your goal.');
+            }
+        }
+
+        function trackWater() {
+            const water = parseInt(document.getElementById('waterInput').value);
+            if (isNaN(water) || water <= 0) {
+                alert('Please enter a valid amount of water (ml).');
+                return;
+            }
+            totalWater += water;
+            document.getElementById('waterReport').innerText = `Total Water Intake: ${totalWater} ml`;
+        }
+
+        function trackSleep() {
+            const sleep = parseInt(document.getElementById('sleepInput').value);
+            if (isNaN(sleep) || sleep <= 0) {
+                alert('Please enter a valid number of sleep hours.');
+                return;
+            }
+            totalSleep += sleep;
+            document.getElementById('sleepReport').innerText = `Total Sleep: ${totalSleep} hours`;
+        }
+
+        function calculateBMI() {
+            const weight = parseFloat(document.getElementById('weightInput').value);
+            const heightCm = parseFloat(document.getElementById('heightInput').value);
+            if (isNaN(weight) || isNaN(heightCm) || weight <= 0 || heightCm <= 0) {
+                alert('Please enter valid weight and height values.');
+                return;
+            }
+            const heightM = heightCm / 100;
+            const bmi = weight / (heightM * heightM);
+            let category = '';
+            if (bmi < 18.5) {
+                category = 'Underweight';
+            } else if (bmi < 24.9) {
+                category = 'Normal weight';
+            } else if (bmi < 29.9) {
+                category = 'Overweight';
+            } else {
+                category = 'Obesity';
+            }
+            document.getElementById('bmiReport').innerText = `BMI: ${bmi.toFixed(2)} (${category})`;
+        }
+
+        function setGreeting() {
+            const hours = new Date().getHours();
+            let greeting = '';
+            if (hours < 12) {
+                greeting = 'Good Morning!';
+            } else if (hours < 18) {
+                greeting = 'Good Afternoon!';
+            } else {
+                greeting = 'Good Evening!';
+            }
+            document.getElementById('greeting').innerText = greeting;
+        }
+
+        function trackHeartbeat() {
+            const heartbeat = parseInt(document.getElementById('heartbeatInput').value);
+            if (isNaN(heartbeat) || heartbeat <= 0) {
+                alert('Please enter a valid heartbeat value (bpm).');
+                return;
+            }
+            totalHeartbeat += heartbeat;
+            heartbeatCount++;
+            const averageHeartbeat = (totalHeartbeat / heartbeatCount).toFixed(2);
+            document.getElementById('heartbeatReport').innerText = `Average Heartbeat: ${averageHeartbeat} bpm`;
+        }
+    </script>
+
+
+
+</body></html>
